@@ -5,11 +5,15 @@ namespace Database
 {
     class Program
     {
+        // Command tokens
         private const string CMD_CREATE_TABLE = "CREATE TABLE";
         private const string CMD_INSERT_INTO = "INSERT INTO";
         private const string CMD_VALUES = "VALUES";
         private const string CMD_SELECT = "SELECT";
         private const string CMD_FROM = "FROM";
+        private const string CMD_UPDATE = "UPDATE";
+        private const string CMD_SET = "SET";
+        private const string CMD_DELETE = "DELETE FROM";
         private const string CMD_QUIT = "QUIT";
         private const string CMD_EXIT = "EXIT";
 
@@ -133,6 +137,35 @@ namespace Database
                         }
                         Console.WriteLine();
                     }
+                }
+                else if (cmd.IndexOf(CMD_UPDATE) == 0)
+                {
+                    // Get table name
+                    string table_name = cmd.Split(' ')[1];
+                    Table table = tables[table_name];
+
+                    // Get name-value pairs to be modifies
+                    cmd = cmd.Substring(cmd.IndexOf(CMD_SET) + CMD_SET.Length + 1);
+                    string[] pairs = cmd.Split(',');
+                    List<string> names = new List<string>();
+                    List<string> values = new List<string>();
+
+                    foreach (var pair in pairs)
+                    {
+                        string[] p = pair.Split('=');
+                        names.Add(p[0].TrimStart().TrimEnd());
+                        values.Add(p[1].TrimStart().TrimEnd());
+                    }
+
+                    table.Update(names, values);
+                }
+                else if (cmd.IndexOf(CMD_DELETE) == 0) {
+                    // Get table name
+                    cmd = cmd.Substring(CMD_DELETE.Length + 1);
+                    string table_name = cmd.Split(' ')[0];
+                    Table table = tables[table_name];
+
+                    table.Delete();
                 }
             }
         }

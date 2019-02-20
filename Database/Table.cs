@@ -12,7 +12,7 @@ namespace Database
 
         private List<string> ColumnNames;
         private readonly Dictionary<string, string> ColumnNameToType;
-        private readonly List<string[]> Lines = new List<string[]>();
+        private List<string[]> Lines = new List<string[]>();
         private readonly int NrColumns = 0;
 
         // Create table where 
@@ -24,9 +24,9 @@ namespace Database
         }
         public List<string> GetColumnNames() { return ColumnNames; }
 
-        public void Insert(List<string> Names, List<string> Values)
+        public void Insert(List<string> names, List<string> values)
         {
-            var nameValuePairs = Names.Zip(Values, (n, v) => new { Name = n, Value = v });
+            var nameValuePairs = names.Zip(values, (n, v) => new { Name = n, Value = v });
             string[] line = new string[NrColumns];
             foreach (var pair in nameValuePairs)
             {
@@ -57,6 +57,34 @@ namespace Database
             }
 
             return selectedLines;
+        }
+
+        public void Update(List<string> names, List<string> values, List<string[]> lines = null)
+        {
+            if (lines == null)
+            {
+                lines = Lines;
+            }
+
+            var nameValuePairs = names.Zip(values, (n, v) => new { Name = n, Value = v });
+            foreach (var l in lines)
+            {
+                foreach (var pair in nameValuePairs)
+                {
+                    l[ColumnNames.IndexOf(pair.Name)] = pair.Value;
+                }
+            }
+        }
+
+        public void Delete(List<string[]> lines = null)
+        {
+            if (lines == null)
+            {
+                Lines.Clear();
+            } else
+            {
+                Lines = Lines.Except(lines).ToList();
+            }
         }
     }
 }
