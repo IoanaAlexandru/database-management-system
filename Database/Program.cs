@@ -14,9 +14,9 @@ namespace Database
         private const string TYPE_DOUBLE = "REAL";
 
         private List<string> ColumnNames;
-        private Dictionary<string, string> ColumnNameToType;
-        private readonly List<string[]> Lines;
-        private int NrColumns = 0;
+        private readonly Dictionary<string, string> ColumnNameToType;
+        private readonly List<string[]> Lines = new List<string[]>();
+        private readonly int NrColumns = 0;
 
         public Table(List<string> names, Dictionary<string, string> columns)
         {
@@ -30,11 +30,31 @@ namespace Database
         {
             var nameValuePairs = Names.Zip(Values, (n, v) => new { Name = n, Value = v });
             string[] line = new string[NrColumns];
-            foreach(var pair in nameValuePairs)
+            foreach (var pair in nameValuePairs)
             {
                 line[ColumnNames.IndexOf(pair.Name)] = pair.Value;
             }
             Lines.Add(line);
+        }
+
+        public List<string[]> Select(List<string> columns)
+        {
+            List<string[]> selectedLines = new List<string[]>();
+
+            foreach (var l in Lines)
+            {
+                string[] selectedColumns = new string[columns.Count];
+                int i = 0;
+
+                foreach (var c in columns)
+                {
+                    selectedColumns[i++] = l[ColumnNames.IndexOf(c)];
+                }
+
+                selectedLines.Add(selectedColumns);
+            }
+
+            return selectedLines;
         }
     }
 
@@ -43,6 +63,8 @@ namespace Database
         private const string CMD_CREATE_TABLE = "CREATE TABLE";
         private const string CMD_INSERT_INTO = "INSERT INTO";
         private const string CMD_VALUES = "VALUES";
+        private const string CMD_SELECT = "SELECT";
+        private const string CMD_FROM = "FROM";
         private const string CMD_QUIT = "QUIT";
         private const string CMD_EXIT = "EXIT";
 
@@ -99,7 +121,8 @@ namespace Database
                         aux_cmd = aux_cmd.Substring(open_bracket + 1, close_bracket - open_bracket - 1);
 
                         string[] col_names = aux_cmd.Split(',');
-                        foreach (string c in col_names) {
+                        foreach (string c in col_names)
+                        {
                             columns.Add(c.TrimStart().TrimEnd());
                         }
                     }
@@ -122,6 +145,43 @@ namespace Database
                     }
 
                     table.Insert(columns, values);
+                }
+                else if (cmd.IndexOf(CMD_SELECT) == 0)
+                {
+                    string cmd_aux = cmd.Substring(cmd.IndexOf(CMD_FROM));
+                    string table_name = cmd_aux.Split(' ')[1];
+
+                    Table table = tables[table_name];
+
+                    cmd = cmd.Substring(cmd.IndexOf(CMD_SELECT) + CMD_SELECT.Length + 1);
+
+                    cmd = cmd.Substring(0, cmd.IndexOf(CMD_FROM) - 1).TrimEnd().TrimStart();
+                    List<string> columns = new List<string>();
+
+                    if (cmd.Equals("*"))
+                    {
+                        columns = table.GetColumnNames();
+                    }
+                    else
+                    {
+                        string[] col_names = cmd.Split(',');
+                        foreach (string c in col_names)
+                        {
+                            columns.Add(c.TrimStart().TrimEnd());
+                        }
+                    }
+
+                    var selected = table.Select(columns);
+
+                    foreach (var line in selected)
+                    {
+                        Console.Write("| ");
+                        foreach (var cell in line)
+                        {
+                            Console.Write(cell + " | ");
+                        }
+                        Console.WriteLine();
+                    }
                 }
             }
         }
