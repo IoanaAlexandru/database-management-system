@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Database
@@ -19,6 +19,14 @@ namespace Database
 
         static void Main(string[] args)
         {
+            Console.WriteLine("Please enter each (uppercase) command on a single line, without ending it in a semicolon.");
+            Console.WriteLine("Write 'QUIT' or 'EXIT' to finish.");
+            Console.WriteLine("Examples:");
+            Console.WriteLine("CREATE TABLE Students (Surname varchar(255), FirstName varchar(255), Birthday datetime, YearStarted real)");
+            Console.WriteLine("INSERT INTO Students VALUES ('Smith', 'Edward', 1998-05-23T14:25:10, 2016)");
+            Console.WriteLine("SELECT Surname, FirstName FROM Students");
+            Console.WriteLine();
+
             Dictionary<string, Table> tables = new Dictionary<string, Table>();
 
             string cmd = "";
@@ -126,17 +134,7 @@ namespace Database
                     }
 
                     var selected = table.Select(columns);
-
-                    // Print selected columns
-                    foreach (var line in selected)
-                    {
-                        Console.Write("| ");
-                        foreach (var cell in line)
-                        {
-                            Console.Write(cell + " | ");
-                        }
-                        Console.WriteLine();
-                    }
+                    Utils.PrintTable(columns, selected);
                 }
                 else if (cmd.IndexOf(CMD_UPDATE) == 0)
                 {
@@ -159,7 +157,8 @@ namespace Database
 
                     table.Update(names, values);
                 }
-                else if (cmd.IndexOf(CMD_DELETE) == 0) {
+                else if (cmd.IndexOf(CMD_DELETE) == 0)
+                {
                     // Get table name
                     cmd = cmd.Substring(CMD_DELETE.Length + 1);
                     string table_name = cmd.Split(' ')[0];
