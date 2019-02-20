@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Database
 {
@@ -28,10 +29,10 @@ namespace Database
         {
             var nameValuePairs = names.Zip(values, (n, v) => new { Name = n, Value = v });
             string[] line = new string[NrColumns];
-            foreach (var pair in nameValuePairs)
-            {
-                line[ColumnNames.IndexOf(pair.Name)] = pair.Value;
-            }
+            Parallel.ForEach(nameValuePairs, pair =>
+           {
+               line[ColumnNames.IndexOf(pair.Name)] = pair.Value;
+           });
             Lines.Add(line);
         }
 
@@ -43,18 +44,18 @@ namespace Database
             }
             List<string[]> selectedLines = new List<string[]>();
 
-            foreach (var l in lines)
-            {
-                string[] selectedColumns = new string[columns.Count];
-                int i = 0;
+            Parallel.ForEach(lines, l =>
+           {
+               string[] selectedColumns = new string[columns.Count];
+               int i = 0;
 
-                foreach (var c in columns)
-                {
-                    selectedColumns[i++] = l[ColumnNames.IndexOf(c)];
-                }
+               foreach (var c in columns)
+               {
+                   selectedColumns[i++] = l[ColumnNames.IndexOf(c)];
+               }
 
-                selectedLines.Add(selectedColumns);
-            }
+               selectedLines.Add(selectedColumns);
+           });
 
             return selectedLines;
         }
@@ -67,13 +68,13 @@ namespace Database
             }
 
             var nameValuePairs = names.Zip(values, (n, v) => new { Name = n, Value = v });
-            foreach (var l in lines)
-            {
-                foreach (var pair in nameValuePairs)
-                {
-                    l[ColumnNames.IndexOf(pair.Name)] = pair.Value;
-                }
-            }
+            Parallel.ForEach(lines, l =>
+           {
+               Parallel.ForEach(nameValuePairs, pair =>
+              {
+                  l[ColumnNames.IndexOf(pair.Name)] = pair.Value;
+              });
+           });
         }
 
         public void Delete(List<string[]> lines = null)
@@ -81,7 +82,8 @@ namespace Database
             if (lines == null)
             {
                 Lines.Clear();
-            } else
+            }
+            else
             {
                 Lines = Lines.Except(lines).ToList();
             }
