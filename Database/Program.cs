@@ -112,7 +112,7 @@ namespace Database
                 }
                 else if (cmd.IndexOf(CMD_SELECT) == 0)
                 {
-                    // Get table name
+                    // Get table
                     string cmd_aux = cmd.Substring(cmd.IndexOf(CMD_FROM));
                     string table_name = cmd_aux.Split(' ')[1];
                     if (!tables.TryGetValue(table_name, out Table table))
@@ -150,14 +150,14 @@ namespace Database
                 }
                 else if (cmd.IndexOf(CMD_UPDATE) == 0)
                 {
-                    // Get table name
+                    // Get table
                     string table_name = cmd.Split(' ')[1];
                     if (!tables.TryGetValue(table_name, out Table table))
                         continue;
 
-                    // Get name-value pairs to be modifies
                     cmd = cmd.Substring(cmd.IndexOf(CMD_SET) + CMD_SET.Length + 1);
 
+                    // Parse WHERE condition, if present
                     int where_index = cmd.IndexOf(CMD_WHERE);
                     string where_cond = "";
                     if (where_index >= 0)
@@ -166,6 +166,7 @@ namespace Database
                         cmd = cmd.Substring(0, where_index - 1);
                     }
 
+                    // Get name-value pairs to be modified
                     string[] pairs = cmd.Split(',');
                     List<string> names = new List<string>();
                     List<string> values = new List<string>();
@@ -184,6 +185,7 @@ namespace Database
                 {
                     cmd = cmd.Substring(CMD_DELETE.Length + 1);
 
+                    // Parse WHERE condition, if present
                     int where_index = cmd.IndexOf(CMD_WHERE);
                     string where_cond = "";
                     if (where_index >= 0)
@@ -191,6 +193,8 @@ namespace Database
                         where_cond = cmd.Substring(where_index + CMD_WHERE.Length + 1);
                         cmd = cmd.Substring(0, where_index - 1);
                     }
+
+                    // Get table
                     string table_name = cmd.Split(' ')[0];
                     if (!tables.TryGetValue(table_name, out Table table))
                         continue;

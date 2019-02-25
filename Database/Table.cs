@@ -16,7 +16,7 @@ namespace Database
         private List<string[]> Lines = new List<string[]>();
         private readonly int NrColumns = 0;
 
-        // Create table where 
+        // Create table using the column names (in order) and the column types
         public Table(List<string> names, Dictionary<string, string> columns)
         {
             ColumnNames = names;
@@ -25,19 +25,21 @@ namespace Database
         }
         public List<string> GetColumnNames() { return ColumnNames; }
 
+        // Insert new entry in the table using the name-value pairs
         public void Insert(List<string> names, List<string> values)
         {
             var nameValuePairs = names.Zip(values, (n, v) => new { Name = n, Value = v });
             string[] line = new string[NrColumns];
             Parallel.ForEach(nameValuePairs, pair =>
            {
-               int col_index = ColumnNames.IndexOf(pair.Name);
-               if (col_index < 0) return;
-               line[col_index] = pair.Value;
+               int colIndex = ColumnNames.IndexOf(pair.Name);
+               if (colIndex < 0) return;
+               line[colIndex] = pair.Value;
            });
             Lines.Add(line);
         }
 
+        // Select columns from the lines in the table (or from the lines parameter, if not null)
         public List<string[]> Select(ref List<string> columns, List<string[]> lines = null)
         {
             if (lines == null)
@@ -46,33 +48,35 @@ namespace Database
             }
 
             List<string[]> selectedLines = new List<string[]>();
-            List<string> columns_clone = new List<string>();
+            List<string> columnsClone = new List<string>();
             foreach (var c in columns)
-                columns_clone.Add(c);
-            List<string> invalid_columns = new List<string>();
+                columnsClone.Add(c);
+            List<string> invalidColumns = new List<string>();
 
             Parallel.ForEach(lines, l =>
            {
                List<string> selectedColumns = new List<string>();
 
-               foreach (var c in columns_clone)
+               foreach (var c in columnsClone)
                {
-                   int col_index = ColumnNames.IndexOf(c);
-                   if (col_index < 0)
+                   int colIndex = ColumnNames.IndexOf(c);
+                   if (colIndex < 0)
                    {
-                       invalid_columns.Add(c);
+                       invalidColumns.Add(c);
                        continue;
                    }
-                   selectedColumns.Add(l[col_index]);
+                   selectedColumns.Add(l[colIndex]);
                }
 
                selectedLines.Add(selectedColumns.ToArray());
            });
 
-            columns = columns.Except(invalid_columns).ToList();
+            // Remove columns that were not found
+            columns = columns.Except(invalidColumns).ToList();
             return selectedLines;
         }
 
+        // Update the name-value pairs in the lines from table (or from the lines parameter, if not null)
         public void Update(List<string> names, List<string> values, List<string[]> lines = null)
         {
             if (lines == null)
@@ -92,6 +96,7 @@ namespace Database
            });
         }
 
+        // Delete all lines from the table (or only the lines parameter, if not null)
         public void Delete(List<string[]> lines = null)
         {
             if (lines == null)
@@ -104,38 +109,41 @@ namespace Database
             }
         }
 
+        // Get all lines from the table which follow the restriction column = value
         public List<string[]> WhereEquals(string column, string value)
         {
-            int col_index = ColumnNames.IndexOf(column);
-            if (col_index < 0)
+            int colIndex = ColumnNames.IndexOf(column);
+            if (colIndex < 0)
                 return new List<string[]>();
 
             var result = from x in Lines
-                         where x[col_index].Equals(value)
+                         where x[colIndex].Equals(value)
                          select x;
             return result.ToList();
         }
 
+        // Get all lines from the table which follow the restriction column < value
         public List<string[]> WhereLess(string column, string value)
         {
-            int col_index = ColumnNames.IndexOf(column);
-            if (col_index < 0)
+            int colIndex = ColumnNames.IndexOf(column);
+            if (colIndex < 0)
                 return new List<string[]>();
 
             var result = from x in Lines
-                         where x[col_index].CompareTo(value) < 0
+                         where x[colIndex].CompareTo(value) < 0
                          select x;
             return result.ToList();
         }
 
+        // Get all lines from the table which follow the restriction column > value
         public List<string[]> WhereGreater(string column, string value)
         {
-            int col_index = ColumnNames.IndexOf(column);
-            if (col_index < 0)
+            int colIndex = ColumnNames.IndexOf(column);
+            if (colIndex < 0)
                 return new List<string[]>();
 
             var result = from x in Lines
-                         where x[col_index].CompareTo(value) > 0
+                         where x[colIndex].CompareTo(value) > 0
                          select x;
             return result.ToList();
         }
