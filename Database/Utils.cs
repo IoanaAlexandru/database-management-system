@@ -8,6 +8,7 @@ namespace Database
 {
     class Utils
     {
+        // Print table using box drawing characters
         public static void PrintTable(List<string> header, List<string[]> lines)
         {
             // Calculate lengths to print table cells centered
@@ -78,6 +79,41 @@ namespace Database
                 Console.Write(new String('─', max) + (max.Equals(maxCellLen[maxCellLen.Length - 1]) ? "┘" : "┴"));
             }
             Console.WriteLine();
+        }
+
+        // Parse condition and get corresponding lines from the table
+        public static List<string[]> Filter(Table table, string condition)
+        {
+            List<string[]> filtered = null;
+
+            if (!condition.Equals(""))
+            {
+                // Basic comparison operators
+                string[] separators = { ">=", "<=", ">", "<", "=" };
+                string separator = "";
+                string[] separated = null;
+                foreach (var sep in separators)
+                {
+                    if (condition.Contains(sep))
+                    {
+                        separated = condition.Split(new string[] { sep }, StringSplitOptions.None);
+                        separator = sep;
+                        break;
+                    }
+                }
+                if (separated != null)
+                {
+                    filtered = new List<string[]>();
+                    if (separator.Contains("="))
+                        filtered = filtered.Union(table.WhereEquals(separated[0], separated[1])).ToList();
+                    if (separator.Contains(">"))
+                        filtered = filtered.Union(table.WhereGreater(separated[0], separated[1])).ToList();
+                    if (separator.Contains("<"))
+                        filtered = filtered.Union(table.WhereLess(separated[0], separated[1])).ToList();
+                }
+            }
+
+            return filtered;
         }
     }
 }

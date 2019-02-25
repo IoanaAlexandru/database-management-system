@@ -31,32 +31,45 @@ namespace Database
             string[] line = new string[NrColumns];
             Parallel.ForEach(nameValuePairs, pair =>
            {
-               line[ColumnNames.IndexOf(pair.Name)] = pair.Value;
+               int col_index = ColumnNames.IndexOf(pair.Name);
+               if (col_index < 0) return;
+               line[col_index] = pair.Value;
            });
             Lines.Add(line);
         }
 
-        public List<string[]> Select(List<string> columns, List<string[]> lines = null)
+        public List<string[]> Select(ref List<string> columns, List<string[]> lines = null)
         {
             if (lines == null)
             {
                 lines = Lines;
             }
+
             List<string[]> selectedLines = new List<string[]>();
+            List<string> columns_clone = new List<string>();
+            foreach (var c in columns)
+                columns_clone.Add(c);
+            List<string> invalid_columns = new List<string>();
 
             Parallel.ForEach(lines, l =>
            {
-               string[] selectedColumns = new string[columns.Count];
-               int i = 0;
+               List<string> selectedColumns = new List<string>();
 
-               foreach (var c in columns)
+               foreach (var c in columns_clone)
                {
-                   selectedColumns[i++] = l[ColumnNames.IndexOf(c)];
+                   int col_index = ColumnNames.IndexOf(c);
+                   if (col_index < 0)
+                   {
+                       invalid_columns.Add(c);
+                       continue;
+                   }
+                   selectedColumns.Add(l[col_index]);
                }
 
-               selectedLines.Add(selectedColumns);
+               selectedLines.Add(selectedColumns.ToArray());
            });
 
+            columns = columns.Except(invalid_columns).ToList();
             return selectedLines;
         }
 
@@ -72,7 +85,9 @@ namespace Database
            {
                Parallel.ForEach(nameValuePairs, pair =>
               {
-                  l[ColumnNames.IndexOf(pair.Name)] = pair.Value;
+                  int col_index = ColumnNames.IndexOf(pair.Name);
+                  if (col_index < 0) return;
+                  l[col_index] = pair.Value;
               });
            });
         }
@@ -91,24 +106,36 @@ namespace Database
 
         public List<string[]> WhereEquals(string column, string value)
         {
+            int col_index = ColumnNames.IndexOf(column);
+            if (col_index < 0)
+                return new List<string[]>();
+
             var result = from x in Lines
-                         where x[ColumnNames.IndexOf(column)].Equals(value)
+                         where x[col_index].Equals(value)
                          select x;
             return result.ToList();
         }
 
         public List<string[]> WhereLess(string column, string value)
         {
+            int col_index = ColumnNames.IndexOf(column);
+            if (col_index < 0)
+                return new List<string[]>();
+
             var result = from x in Lines
-                         where x[ColumnNames.IndexOf(column)].CompareTo(value) < 0
+                         where x[col_index].CompareTo(value) < 0
                          select x;
             return result.ToList();
         }
 
         public List<string[]> WhereGreater(string column, string value)
         {
+            int col_index = ColumnNames.IndexOf(column);
+            if (col_index < 0)
+                return new List<string[]>();
+
             var result = from x in Lines
-                         where x[ColumnNames.IndexOf(column)].CompareTo(value) > 0
+                         where x[col_index].CompareTo(value) > 0
                          select x;
             return result.ToList();
         }
