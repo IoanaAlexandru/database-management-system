@@ -88,5 +88,29 @@ namespace Database
                 Lines = Lines.Except(lines).ToList();
             }
         }
+
+        public List<string[]> WhereEquals(string column, string value)
+        {
+            var result = from x in Lines
+                         where x[ColumnNames.IndexOf(column)].Equals(value)
+                         select x;
+            return result.ToList();
+        }
+
+        public List<string[]> WhereLess(string column, string value)
+        {
+            var result = from x in Lines
+                         where x[ColumnNames.IndexOf(column)].CompareTo(value) < 0
+                         select x;
+            return result.ToList();
+        }
+
+        public List<string[]> WhereGreater(string column, string value)
+        {
+            var result = from x in Lines
+                         where x[ColumnNames.IndexOf(column)].CompareTo(value) > 0
+                         select x;
+            return result.ToList();
+        }
     }
 }

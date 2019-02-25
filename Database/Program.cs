@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Database
 {
@@ -14,6 +15,7 @@ namespace Database
         private const string CMD_UPDATE = "UPDATE";
         private const string CMD_SET = "SET";
         private const string CMD_DELETE = "DELETE FROM";
+        private const string CMD_WHERE = "WHERE";
         private const string CMD_QUIT = "QUIT";
         private const string CMD_EXIT = "EXIT";
 
@@ -118,6 +120,11 @@ namespace Database
                     List<string> columns = new List<string>();
 
                     cmd = cmd.Substring(cmd.IndexOf(CMD_SELECT) + CMD_SELECT.Length + 1);
+
+                    int where_index = cmd.IndexOf(CMD_WHERE);
+                    string where_cond = "";
+                    if (where_index >= 0)
+                        where_cond = cmd.Substring(where_index + CMD_WHERE.Length + 1);
                     cmd = cmd.Substring(0, cmd.IndexOf(CMD_FROM) - 1).TrimEnd().TrimStart();
 
                     if (cmd.Equals("*"))  // Select all columns
@@ -133,7 +140,33 @@ namespace Database
                         }
                     }
 
-                    var selected = table.Select(columns);
+                    List<string[]> filtered = null;
+                    if (!where_cond.Equals(""))
+                    {
+                        string[] separators = { ">=", "<=", ">", "<", "=" };
+                        string separator = "";
+                        string[] separated = null;
+                        foreach (var sep in separators)
+                        {
+                            if (where_cond.Contains(sep))
+                            {
+                                separated = where_cond.Split(new string[] { sep }, StringSplitOptions.None);
+                                separator = sep;
+                                break;
+                            }
+                        }
+                        if (separated != null)
+                        {
+                            filtered = new List<string[]>();
+                            if (separator.Contains("="))
+                                filtered = filtered.Union(table.WhereEquals(separated[0], separated[1])).ToList();
+                            if (separator.Contains(">"))
+                                filtered = filtered.Union(table.WhereGreater(separated[0], separated[1])).ToList();
+                            if (separator.Contains("<"))
+                                filtered = filtered.Union(table.WhereLess(separated[0], separated[1])).ToList();
+                        }
+                    }
+                    var selected = table.Select(columns, filtered);
                     Utils.PrintTable(columns, selected);
                 }
                 else if (cmd.IndexOf(CMD_UPDATE) == 0)
